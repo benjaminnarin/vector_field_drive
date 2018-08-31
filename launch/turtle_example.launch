@@ -1,0 +1,8 @@
+<launch>
+    <include file="$(find turtlebot_stage)/launch/turtlebot_in_stage.launch" />
+    <remap from="/cmd_vel" to="/cmd_vel"/>
+    <include file="$(find teleop_twist_joy)/launch/teleop.launch" />
+
+    <node name="vel_field" pkg="vector_field_movement" type="field_movement.py"/>
+</launch>
+    

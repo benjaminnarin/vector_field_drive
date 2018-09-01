@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Module field_movement.py
-Creates a class which calculates a rough field around a moving robot, and then 
+Creates a class which calculates a rough field around a moving robot, and then
 attempts to steer the robot away from any obstacles by calculating any colliding
 walls, based on the laser data, and then subtracting a surface normal projection
 away from the inputted command velocity. This should keep the robot from driving
@@ -29,7 +29,7 @@ class VectorFieldMover(object):
         self._laser_scan = None
         self._vel_pub = rospy.Publisher("/cmd_vel_mux/input/teleop", Twist, queue_size=10)
         self.distance_threshold = 0.75 #meters
-        self.num_divisions = 16# best guess? seems to work better with 16 than 10
+        self.num_divisions = 19# best guess? seems to work better with 16 than 10; Switched to 19 to fit scan_multi outputs
 
     def laser_scan_cb(self, msg):
         """ Records the recieved laser scan into the class.  """
@@ -37,9 +37,9 @@ class VectorFieldMover(object):
 
     def wall_normal(self, distance, start_index, div_width):
         """
-        Helper function to calculate the normal vector of the imaginary 
+        Helper function to calculate the normal vector of the imaginary
         wall created by the closest laser scan within a single section.
-        
+
         Args:
             distance: distance to the "wall"
             start_index: starting index within the laser scan for this division
@@ -69,7 +69,7 @@ class VectorFieldMover(object):
             return
 
         # Keep track of a planar version of the twist message, so we can modify it during later steps
-        planar_vel = np.array([msg.linear.x, msg.linear.y])
+        planar_vel = np.array([msg.linear.x, msg.angular.z])
 
         # Divide the laser scan into a series of divisions, and calculate a vector
         # for each division. (Bill's suggestion, the easiest implementation)
@@ -78,7 +78,7 @@ class VectorFieldMover(object):
         if len(self._laser_scan.ranges) % self.num_divisions > 0:
             raise VectorFieldError("The number of divisions ({}) does not cleanly divide the scan size ({})".format(self.num_divisions, len(self._laser_scan.ranges)))
 
-        # Calculate out the vector components to subtract, based on the divisions 
+        # Calculate out the vector components to subtract, based on the divisions
         div_width = len(self._laser_scan.ranges)/self.num_divisions
         # Loop across each division in the laser scan
         for start_index in range(0, len(self._laser_scan.ranges), div_width):
@@ -100,12 +100,12 @@ class VectorFieldMover(object):
 
         # Compare the fully compute planar velocity to travel along, vs the original input velocity
         print "Planar vel: ", planar_vel
-        print "Refer  vel: ", np.array([msg.linear.x, msg.linear.y])
+        print "Refer  vel: ", np.array([msg.linear.x, msg.angular.z])
         # Assign and publish
         msg.linear.x = planar_vel[0]
-        msg.linear.y = planar_vel[1]
+        msg.angular.z = planar_vel[1]
         self._vel_pub.publish(msg)
-        
+
 if __name__ == "__main__":
     rospy.init_node("vel_field")
     VFM = VectorFieldMover()

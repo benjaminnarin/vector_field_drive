@@ -28,7 +28,7 @@ class VectorFieldMover(object):
         """
         self._laser_scan = None
         self._vel_pub = rospy.Publisher("/cmd_vel_mux/input/teleop", Twist, queue_size=10)
-        self.distance_threshold = 0.95 #meters
+        self.distance_threshold = 1.25 #meters
         self.num_divisions = 19# best guess? seems to work better with 16 than 10; Switched to 19 to fit scan_multi outputs
 
     def laser_scan_cb(self, msg):
@@ -69,7 +69,7 @@ class VectorFieldMover(object):
             return
 
         # Keep track of a planar version of the twist message, so we can modify it during later steps
-        planar_vel = np.array([msg.linear.x, msg.angular.z])
+        planar_vel = np.array([msg.linear.x, msg.linear.y])
 
         # Divide the laser scan into a series of divisions, and calculate a vector
         # for each division. (Bill's suggestion, the easiest implementation)
@@ -100,10 +100,10 @@ class VectorFieldMover(object):
 
         # Compare the fully compute planar velocity to travel along, vs the original input velocity
         print "Planar vel: ", planar_vel
-        print "Refer  vel: ", np.array([msg.linear.x, msg.angular.z])
+        print "Refer  vel: ", np.array([msg.linear.x, msg.linear.y])
         # Assign and publish
         msg.linear.x = planar_vel[0]
-        msg.angular.z = planar_vel[1]
+        msg.linear.y = planar_vel[1]
         self._vel_pub.publish(msg)
 
 if __name__ == "__main__":

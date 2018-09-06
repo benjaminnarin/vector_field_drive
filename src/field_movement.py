@@ -28,7 +28,7 @@ class VectorFieldMover(object):
         """
         self._laser_scan = None
         self._vel_pub = rospy.Publisher("/cmd_vel_mux/input/teleop", Twist, queue_size=10)
-        self.distance_threshold = 1.25 #meters
+        self.distance_threshold = 1.17 #meters. Magic number
         self.num_divisions = 19# best guess? seems to work better with 16 than 10; Switched to 19 to fit scan_multi outputs
 
     def laser_scan_cb(self, msg):
